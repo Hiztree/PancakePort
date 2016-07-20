@@ -1,0 +1,29 @@
+#The prefix for messaging and such.
+Prefix: '&8[&bPancakePort&8] '
+
+#The radius to check locations at.
+Radius: 30
+
+#The cooldown between executing the command. Use pancakeport.nocooldown to ignore.
+CommandCooldown: 60
+
+#The timer before the player is teleported. Use pancakeport.notimer to ignore.
+Timer: 3
+
+#The max distance the player can be teleported. Lower values = typically less lag.
+Max:
+  X: 5000
+  Z: 5000
+
+Messages:
+  CooldownError: '&cYou must wait {0}s till you can use this command again!'
+  Timer: '&7{0}s...'
+  Teleport: '&6You have been randomly teleported!'
+  TryAgain: '&cNo safe location found. Please try again!'
+  NoPermission: '&cYou do not have enough permission to use this command!'
+  PlayerOffline: '&cThat player is not online!'
+  UsageError: '&cUsage: &7{0}&c.'
+  SenderForceTeleport: '&6You have forcefully teleported the player &7{0}&6!'
+
+#The locations are being saved here. Please delete them once in a while.
+Locations: []

@@ -1,0 +1,9 @@
+name: PancakePort
+version: 1.0
+main: me.Hiztree.PancakePort.PancakePort
+description: A random port tool for Pancake Tekkit.
+commands:
+  randomport:
+    description: Will randomly teleport you somewhere in the world.
+  rp:
+    description: Will randomly teleport you somewhere in the world.
