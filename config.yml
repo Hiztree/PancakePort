@@ -15,6 +15,9 @@ Max:
   X: 5000
   Z: 5000
 
+BannedWorlds:
+  - skyblock
+
 Messages:
   CooldownError: '&cYou must wait {0}s till you can use this command again!'
   Timer: '&7{0}s...'
@@ -24,6 +27,7 @@ Messages:
   PlayerOffline: '&cThat player is not online!'
   UsageError: '&cUsage: &7{0}&c.'
   SenderForceTeleport: '&6You have forcefully teleported the player &7{0}&6!'
+  InvalidWorld: '&cYou cannot randomly teleport in this world!'
 
 #The locations are being saved here. Please delete them once in a while.
 Locations: []

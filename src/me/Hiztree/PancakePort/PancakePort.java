@@ -32,11 +32,11 @@ public class PancakePort extends JavaPlugin {
     private int radius, commandCooldown, timer;
     private int maxX, maxZ;
     private List<String> locations;
+    private List<String> bannedWorlds;
     private HashMap<String, Long> cooldowns = Maps.newHashMap();
 
-    int task;
+    private int task;
 
-    //Loads up everything.
     public void onEnable() {
         File directory = new File("plugins/PancakePort");
         configFile = new File(directory, "config.yml");
@@ -66,6 +66,7 @@ public class PancakePort extends JavaPlugin {
         maxZ = config.getInt("Max.Z", 5000);
 
         locations = config.getStringList("Locations");
+        bannedWorlds = config.getStringList("BannedWorlds");
 
         getCommand("rp").setExecutor(this);
         getCommand("randomport").setExecutor(this);
@@ -105,56 +106,60 @@ public class PancakePort extends JavaPlugin {
     }
 
     private void randomTeleport(Player player, boolean ignoreCooldown) {
-        try {
-            if (!ignoreCooldown && cooldowns.containsKey(player.getName()) && !player.hasPermission("pancakeport.nocooldown")) {
-                long oldTime = cooldowns.get(player.getName());
-                long timeDiff = oldTime - System.currentTimeMillis();
-
-                if (timeDiff > 0 && (commandCooldown * 1000) > timeDiff) {
-                    sendMessage(player, config.getString("Messages.CooldownError").replace("{0}", String.valueOf(timeDiff / 1000)));
-                    return;
-                } else {
-                    cooldowns.remove(player.getName());
-                }
+        for (String world : bannedWorlds) {
+            if (world.equalsIgnoreCase(player.getWorld().getName())) {
+                sendMessage(player, config.getString("Messages.InvalidWorld"));
+                return;
             }
+        }
 
-            Location loc = findRandomLocation(player.getWorld());
+        if (!ignoreCooldown && cooldowns.containsKey(player.getName()) && !player.hasPermission("pancakeport.nocooldown")) {
+            long oldTime = cooldowns.get(player.getName());
+            long timeDiff = oldTime - System.currentTimeMillis();
 
-            int counter = 0;
-
-            if (!locationSafe(loc) && !locationOutsideRadius(loc)) {
-                loc = findRandomLocation(player.getWorld());
-                counter++;
-
-                if (counter > 3) {
-                    sendMessage(player, config.getString("Messages.TryAgain"));
-                    return;
-                }
-            }
-
-            if (!player.hasPermission("pancakeport.notimer")) {
-                Location finalLoc = loc;
-
-                task = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
-                    int countdownTimer = timer;
-
-                    public void run() {
-                        if (countdownTimer <= 0) {
-                            doTeleport(player, finalLoc);
-                            Bukkit.getScheduler().cancelTask(task);
-                            return;
-                        }
-
-                        sendMessage(player, config.getString("Messages.Timer").replace("{0}", String.valueOf(countdownTimer)));
-
-                        countdownTimer--;
-                    }
-                }, 0L, 20L);
+            if (timeDiff > 0 && (commandCooldown * 1000) > timeDiff) {
+                sendMessage(player, config.getString("Messages.CooldownError").replace("{0}", String.valueOf(timeDiff / 1000)));
+                return;
             } else {
-                doTeleport(player, loc);
+                cooldowns.remove(player.getName());
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+
+        Location loc = findRandomLocation(player.getWorld());
+
+        int counter = 0;
+
+        if (!locationSafe(loc) && !locationOutsideRadius(loc)) {
+            loc = findRandomLocation(player.getWorld());
+            counter++;
+
+            if (counter > 3) {
+                sendMessage(player, config.getString("Messages.TryAgain"));
+                return;
+            }
+        }
+
+        if (!player.hasPermission("pancakeport.notimer")) {
+            Location finalLoc = loc;
+
+            task = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+                int counter = 0;
+
+                public void run() {
+
+                    if (counter >= timer) {
+                        doTeleport(player, finalLoc);
+                        Bukkit.getScheduler().cancelTask(task);
+                        return;
+                    }
+
+                    sendMessage(player, config.getString("Messages.Timer").replace("{0}", String.valueOf(timer - counter)));
+
+                    counter++;
+                }
+            }, 0L, 20L);
+        } else {
+            doTeleport(player, loc);
         }
     }
 
@@ -176,7 +181,7 @@ public class PancakePort extends JavaPlugin {
         }
     }
 
-    private Location findRandomLocation(World world) throws Exception {
+    private Location findRandomLocation(World world) {
         int x = (int) (Math.random() * maxX);
         int z = (int) (Math.random() * maxZ);
         int y = world.getHighestBlockYAt(x, z);
@@ -184,7 +189,7 @@ public class PancakePort extends JavaPlugin {
         return new Location(world, x, y, z);
     }
 
-    private boolean locationSafe(Location location) throws Exception {
+    private boolean locationSafe(Location location) {
         World world = location.getWorld();
         int x = location.getBlockX();
         int y = location.getBlockZ();
@@ -197,7 +202,9 @@ public class PancakePort extends JavaPlugin {
             if (topBlock.getBlock().isEmpty()) {
                 if (!bottomBlock.getBlock().isLiquid()) {
                     if (!bottomBlock.getBlock().isEmpty()) {
-                        if (!bottomBlock.getBlock().getType().equals(Material.BEDROCK)) {
+                        Material material = bottomBlock.getBlock().getType();
+
+                        if (!material.equals(Material.BED_BLOCK) || !material.equals(Material.STONE)) {
                             return true;
                         }
                     }
@@ -208,7 +215,8 @@ public class PancakePort extends JavaPlugin {
         return false;
     }
 
-    private boolean locationOutsideRadius(Location location) throws Exception {
+
+    private boolean locationOutsideRadius(Location location) {
         for (String loc : locations) {
             String[] split = loc.split(" ");
 
